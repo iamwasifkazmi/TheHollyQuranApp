@@ -1,20 +1,19 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
-import { VerseRow } from '../components/VerseRow';
+import { MushafPager } from '../components/MushafPager';
+import { PageReaderSkeleton } from '../components/Skeleton';
 import {
   getChapter,
-  getSurahVerses,
-  getPageForVerse,
+  getSurahPageRange,
 } from '../services/quranService';
 import { toggleBookmark, isBookmarked } from '../services/bookmarkService';
 import { useAppTheme } from '../context/SettingsContext';
@@ -31,10 +30,22 @@ type Props = {
 export function SurahDetailScreen({ navigation, route }: Props) {
   const { surahId } = route.params;
   const insets = useSafeAreaInsets();
-  const { theme, arabicFontSize } = useAppTheme();
+  const { theme } = useAppTheme();
   const chapter = getChapter(surahId);
-  const verses = getSurahVerses(surahId);
+  const [startPage, endPage] = useMemo(
+    () => getSurahPageRange(surahId),
+    [surahId],
+  );
   const [bookmarked, setBookmarked] = useState(false);
+  const [contentReady, setContentReady] = useState(false);
+
+  useEffect(() => {
+    setContentReady(false);
+    const frame = requestAnimationFrame(() => {
+      setContentReady(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [surahId]);
 
   useEffect(() => {
     isBookmarked('surah', { surah: surahId }).then(setBookmarked);
@@ -51,11 +62,6 @@ export function SurahDetailScreen({ navigation, route }: Props) {
     setBookmarked(added);
   }, [chapter, surahId]);
 
-  const openInMushaf = useCallback(() => {
-    const page = getPageForVerse(surahId, 1);
-    navigation.navigate('Reader', { page, surah: surahId });
-  }, [navigation, surahId]);
-
   if (!chapter) {
     return (
       <View style={styles.error}>
@@ -65,7 +71,11 @@ export function SurahDetailScreen({ navigation, route }: Props) {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, backgroundColor: theme.background },
+      ]}>
       <StatusBar barStyle="light-content" backgroundColor={theme.primary} />
       <View style={[styles.header, { backgroundColor: theme.primary }]}>
         <TouchableOpacity
@@ -79,32 +89,23 @@ export function SurahDetailScreen({ navigation, route }: Props) {
           <Text style={styles.surahName}>{chapter.name}</Text>
           <Text style={styles.surahMeta}>
             {chapter.nameTranslation} · {chapter.versesCount} verses · Pages{' '}
-            {chapter.pages[0]}–{chapter.pages[1]}
+            {startPage}–{endPage}
           </Text>
         </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={handleBookmark} style={styles.iconBtn}>
-            <BookmarkIcon active={bookmarked} size={24} color={colors.accent} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={openInMushaf} style={styles.mushafBtn}>
-            <Text style={styles.mushafBtnText}>Mushaf</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={handleBookmark} style={styles.bookmarkBtn}>
+          <BookmarkIcon active={bookmarked} size={24} color={colors.accent} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        {surahId !== 1 && surahId !== 9 && (
-          <Text style={[styles.bismillah, { color: theme.primary, fontSize: arabicFontSize }]}>
-            بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
-          </Text>
-        )}
-        {verses.map(verse => (
-          <VerseRow key={verse.key} verse={verse} />
-        ))}
-      </ScrollView>
+      {!contentReady ? (
+        <PageReaderSkeleton />
+      ) : (
+        <MushafPager
+          startPage={startPage}
+          endPage={endPage}
+          initialPage={startPage}
+        />
+      )}
     </View>
   );
 }
@@ -112,7 +113,6 @@ export function SurahDetailScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   error: {
     flex: 1,
@@ -120,68 +120,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingBottom: 12,
     paddingTop: 8,
+    gap: 8,
   },
   backBtn: {
-    marginBottom: 8,
-    alignSelf: 'flex-start',
+    padding: 4,
   },
   headerCenter: {
+    flex: 1,
     alignItems: 'center',
   },
   surahArabic: {
-    fontSize: 32,
+    fontSize: 26,
     color: colors.accent,
     fontFamily: typography.arabicLarge.fontFamily,
   },
   surahName: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
     color: colors.textOnPrimary,
-    marginTop: 4,
+    marginTop: 2,
   },
   surahMeta: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textOnPrimary,
     opacity: 0.75,
-    marginTop: 4,
+    marginTop: 2,
     textAlign: 'center',
   },
-  headerActions: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 12,
-    gap: 12,
-  },
-  iconBtn: {
+  bookmarkBtn: {
     padding: 8,
-  },
-  mushafBtn: {
-    backgroundColor: colors.accent,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  mushafBtnText: {
-    color: colors.primaryDark,
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  bismillah: {
-    ...typography.arabicMedium,
-    color: colors.primary,
-    textAlign: 'center',
-    marginBottom: 24,
   },
 });

@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { PageReader } from '../components/PageReader';
+import { PageReaderSkeleton } from '../components/Skeleton';
 import { getPage, getPageForVerse } from '../services/quranService';
 import { toggleBookmark, isBookmarked, getLastRead } from '../services/bookmarkService';
 import { useAppTheme } from '../context/SettingsContext';
@@ -23,43 +24,46 @@ type Props = {
 
 export function ReaderScreen({ navigation, route }: Props) {
   const { theme, settings } = useAppTheme();
-  const [startPage, setStartPage] = useState(1);
+  const [startPage, setStartPage] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [bookmarked, setBookmarked] = useState(false);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    const resolve = async () => {
+    let cancelled = false;
+
+    const resolve = () => {
       if (route.params?.page) {
-        setStartPage(route.params.page);
-        setCurrentPage(route.params.page);
-        return;
+        return route.params.page;
       }
       if (route.params?.surah) {
-        const page = getPageForVerse(
-          route.params.surah,
-          route.params.ayah ?? 1,
-        );
-        setStartPage(page);
-        setCurrentPage(page);
-        return;
+        return getPageForVerse(route.params.surah, route.params.ayah ?? 1);
       }
       if (settings.preferLastRead) {
-        const last = await getLastRead();
-        setStartPage(last);
-        setCurrentPage(last);
-        return;
+        return getLastRead();
       }
-      const preset = settings.presetStartPage ?? 1;
-      setStartPage(preset);
-      setCurrentPage(preset);
+      return Promise.resolve(settings.presetStartPage ?? 1);
     };
-    resolve();
+
+    const run = async () => {
+      const result = await resolve();
+      if (!cancelled) {
+        setStartPage(result);
+        setCurrentPage(result);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
   }, [route.params, settings.preferLastRead, settings.presetStartPage]);
 
   useEffect(() => {
-    isBookmarked('page', { page: currentPage }).then(setBookmarked);
-  }, [currentPage]);
+    if (startPage) {
+      isBookmarked('page', { page: currentPage }).then(setBookmarked);
+    }
+  }, [currentPage, startPage]);
 
   const handleBookmark = useCallback(async (page: number) => {
     const pageData = getPage(page);
@@ -72,6 +76,8 @@ export function ReaderScreen({ navigation, route }: Props) {
     });
     setBookmarked(added);
   }, []);
+
+  const isLoading = startPage === null;
 
   return (
     <View
@@ -94,12 +100,16 @@ export function ReaderScreen({ navigation, route }: Props) {
           <Text style={[styles.jumpText, { color: theme.accent }]}>Go to</Text>
         </TouchableOpacity>
       </View>
-      <PageReader
-        initialPage={startPage}
-        onPageChange={setCurrentPage}
-        onBookmarkPress={handleBookmark}
-        isBookmarked={bookmarked}
-      />
+      {isLoading ? (
+        <PageReaderSkeleton />
+      ) : (
+        <PageReader
+          initialPage={startPage}
+          onPageChange={setCurrentPage}
+          onBookmarkPress={handleBookmark}
+          isBookmarked={bookmarked}
+        />
+      )}
     </View>
   );
 }

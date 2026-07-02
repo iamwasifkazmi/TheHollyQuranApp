@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { JuzCard } from '../components/JuzCard';
+import { VerseListSkeleton } from '../components/Skeleton';
 import { getJuzs } from '../services/quranService';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
@@ -21,6 +23,21 @@ type Props = {
 export function JuzScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const juzs = getJuzs();
+  const [navigatingTo, setNavigatingTo] = useState<number | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      setNavigatingTo(null);
+    }, []),
+  );
+
+  const openJuz = useCallback(
+    (juzNumber: number) => {
+      setNavigatingTo(juzNumber);
+      navigation.navigate('JuzDetail', { juzNumber });
+    },
+    [navigation],
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -29,20 +46,23 @@ export function JuzScreen({ navigation }: Props) {
         <Text style={styles.title}>Juz / Para</Text>
         <Text style={styles.subtitle}>30 Parts of the Quran</Text>
       </View>
-      <FlatList
-        data={juzs}
-        keyExtractor={item => String(item.juzNumber)}
-        renderItem={({ item }) => (
-          <JuzCard
-            number={item.juzNumber}
-            onPress={() =>
-              navigation.navigate('JuzDetail', { juzNumber: item.juzNumber })
-            }
-          />
-        )}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-      />
+      {navigatingTo !== null ? (
+        <VerseListSkeleton rows={8} />
+      ) : (
+        <FlatList
+          data={juzs}
+          keyExtractor={item => String(item.id)}
+          renderItem={({ item }) => (
+            <JuzCard
+              number={item.juzNumber}
+              onPress={() => openJuz(item.juzNumber)}
+            />
+          )}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          initialNumToRender={15}
+        />
+      )}
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,11 @@ import {
   StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SurahCard } from '../components/SurahCard';
 import { SearchBar } from '../components/SearchBar';
+import { VerseListSkeleton } from '../components/Skeleton';
 import { getChapters, searchChapters } from '../services/quranService';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
@@ -22,9 +24,24 @@ type Props = {
 export function SurahsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
+  const [navigatingTo, setNavigatingTo] = useState<number | null>(null);
   const chapters = useMemo(
     () => (query ? searchChapters(query) : getChapters()),
     [query],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      setNavigatingTo(null);
+    }, []),
+  );
+
+  const openSurah = useCallback(
+    (surahId: number) => {
+      setNavigatingTo(surahId);
+      navigation.navigate('SurahDetail', { surahId });
+    },
+    [navigation],
   );
 
   return (
@@ -40,25 +57,30 @@ export function SurahsScreen({ navigation }: Props) {
           onChangeText={setQuery}
           placeholder="Search surah by name or number..."
         />
-        <FlatList
-          data={chapters}
-          keyExtractor={item => String(item.id)}
-          renderItem={({ item }) => (
-            <SurahCard
-              number={item.id}
-              name={item.name}
-              nameArabic={item.nameArabic}
-              nameTranslation={item.nameTranslation}
-              versesCount={item.versesCount}
-              revelationPlace={item.revelationPlace}
-              onPress={() =>
-                navigation.navigate('SurahDetail', { surahId: item.id })
-              }
-            />
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.list}
-        />
+        {navigatingTo !== null ? (
+          <VerseListSkeleton rows={8} />
+        ) : (
+          <FlatList
+            data={chapters}
+            keyExtractor={item => String(item.id)}
+            renderItem={({ item }) => (
+              <SurahCard
+                number={item.id}
+                name={item.name}
+                nameArabic={item.nameArabic}
+                nameTranslation={item.nameTranslation}
+                versesCount={item.versesCount}
+                revelationPlace={item.revelationPlace}
+                onPress={() => openSurah(item.id)}
+              />
+            )}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.list}
+            initialNumToRender={15}
+            maxToRenderPerBatch={20}
+            windowSize={10}
+          />
+        )}
       </View>
     </View>
   );

@@ -35,6 +35,19 @@ export interface Page {
   verses: Verse[];
 }
 
+export type MushafLineType = 'surah-header' | 'basmala' | 'text';
+
+export interface MushafLine {
+  line: number;
+  type: MushafLineType;
+  text?: string;
+}
+
+export interface MushafPage {
+  pageNumber: number;
+  lines: MushafLine[];
+}
+
 export type BookmarkType = 'surah' | 'page' | 'verse' | 'juz';
 
 export interface Bookmark {

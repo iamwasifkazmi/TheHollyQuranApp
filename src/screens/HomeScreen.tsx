@@ -15,6 +15,7 @@ import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { getLastRead } from '../services/bookmarkService';
 import { Icon, QuickActionIcons, ChevronRight } from '../components/AppIcon';
+import { PageReaderSkeleton } from '../components/Skeleton';
 import type { RootStackParamList } from '../types/quran';
 
 type Props = {
@@ -25,16 +26,26 @@ export function HomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { theme } = useAppTheme();
   const [lastPage, setLastPage] = useState(1);
+  const [openingReader, setOpeningReader] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       getLastRead().then(setLastPage);
+      setOpeningReader(false);
     }, []),
   );
 
+  const openReader = useCallback(
+    (params: RootStackParamList['Reader'] = {}) => {
+      setOpeningReader(true);
+      navigation.navigate('Reader', params);
+    },
+    [navigation],
+  );
+
   const continueReading = useCallback(() => {
-    navigation.navigate('Reader', { page: lastPage });
-  }, [navigation, lastPage]);
+    openReader({ page: lastPage });
+  }, [openReader, lastPage]);
 
   return (
     <View
@@ -52,7 +63,8 @@ export function HomeScreen({ navigation }: Props) {
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentInner}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={!openingReader}>
         <TouchableOpacity
           style={[
             styles.continueCard,
@@ -89,7 +101,7 @@ export function HomeScreen({ navigation }: Props) {
             icon={QuickActionIcons.mushaf}
             title="Mushaf"
             subtitle="Swipe pages"
-            onPress={() => navigation.navigate('Reader', {})}
+            onPress={() => openReader()}
           />
           <QuickAction
             icon={QuickActionIcons.surahs}
@@ -127,6 +139,12 @@ export function HomeScreen({ navigation }: Props) {
           </Text>
         </View>
       </ScrollView>
+
+      {openingReader && (
+        <View style={styles.readerOverlay}>
+          <PageReaderSkeleton />
+        </View>
+      )}
     </View>
   );
 }
@@ -275,5 +293,10 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     opacity: 0.85,
     lineHeight: 20,
+  },
+  readerOverlay: {
+    ...StyleSheet.absoluteFill,
+    paddingTop: 120,
+    backgroundColor: 'rgba(0,0,0,0.08)',
   },
 });

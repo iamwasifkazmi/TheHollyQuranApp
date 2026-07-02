@@ -95,17 +95,17 @@ export function AppNavigator() {
         <Stack.Screen
           name="SurahDetail"
           component={SurahDetailScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={{ animation: 'fade_from_bottom' }}
         />
         <Stack.Screen
           name="JuzDetail"
           component={JuzDetailScreen}
-          options={{ animation: 'slide_from_right' }}
+          options={{ animation: 'fade_from_bottom' }}
         />
         <Stack.Screen
           name="Reader"
           component={ReaderScreen}
-          options={{ animation: 'slide_from_bottom' }}
+          options={{ animation: 'fade' }}
         />
         <Stack.Screen
           name="PageJump"
