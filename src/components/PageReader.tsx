@@ -8,6 +8,8 @@ import {
   Dimensions,
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { BookmarkIcon } from './AppIcon';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { getPage, getTotalPages } from '../services/quranService';
@@ -99,9 +101,16 @@ export function PageReader({
           style={styles.navButton}
           onPress={() => goToPage(currentPage - 1)}
           disabled={currentPage <= 1}>
-          <Text style={[styles.navText, currentPage <= 1 && styles.navDisabled]}>
-            ‹ Prev
-          </Text>
+          <View style={styles.navRow}>
+            <MaterialCommunityIcons
+              name="chevron-left"
+              size={20}
+              color={currentPage <= 1 ? colors.textOnPrimary + '59' : colors.textOnPrimary}
+            />
+            <Text style={[styles.navText, currentPage <= 1 && styles.navDisabled]}>
+              Prev
+            </Text>
+          </View>
         </TouchableOpacity>
 
         <View style={styles.pageIndicator}>
@@ -116,22 +125,31 @@ export function PageReader({
           style={styles.navButton}
           onPress={() => goToPage(currentPage + 1)}
           disabled={currentPage >= totalPages}>
-          <Text
-            style={[
-              styles.navText,
-              currentPage >= totalPages && styles.navDisabled,
-            ]}>
-            Next ›
-          </Text>
+          <View style={styles.navRow}>
+            <Text
+              style={[
+                styles.navText,
+                currentPage >= totalPages && styles.navDisabled,
+              ]}>
+              Next
+            </Text>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={20}
+              color={
+                currentPage >= totalPages
+                  ? colors.textOnPrimary + '59'
+                  : colors.textOnPrimary
+              }
+            />
+          </View>
         </TouchableOpacity>
 
         {onBookmarkPress && (
           <TouchableOpacity
             style={styles.bookmarkBtn}
             onPress={() => onBookmarkPress(currentPage)}>
-            <Text style={styles.bookmarkIcon}>
-              {isBookmarked ? '★' : '☆'}
-            </Text>
+            <BookmarkIcon active={isBookmarked} size={24} color={colors.accent} />
           </TouchableOpacity>
         )}
       </View>
@@ -184,6 +202,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
   navText: {
     color: colors.textOnPrimary,
     fontSize: 15,
@@ -212,10 +235,6 @@ const styles = StyleSheet.create({
   },
   bookmarkBtn: {
     padding: 8,
-  },
-  bookmarkIcon: {
-    fontSize: 22,
-    color: colors.accent,
   },
   pager: {
     flex: 1,

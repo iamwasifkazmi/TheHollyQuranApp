@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
@@ -11,33 +11,25 @@ import { JuzDetailScreen } from '../screens/JuzDetailScreen';
 import { BookmarksScreen } from '../screens/BookmarksScreen';
 import { ReaderScreen } from '../screens/ReaderScreen';
 import { PageJumpScreen } from '../screens/PageJumpScreen';
+import { TabBarIcon } from '../components/AppIcon';
 import { colors } from '../theme/colors';
 import type { MainTabParamList, RootStackParamList } from '../types/quran';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
-  const icons: Record<string, string> = {
-    Home: '🏠',
-    Surahs: '📋',
-    Juz: '📑',
-    Bookmarks: '🔖',
-  };
-  return (
-    <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>
-      {icons[label] ?? '•'}
-    </Text>
-  );
-}
-
 function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarIcon: ({ focused }) => (
-          <TabIcon label={route.name} focused={focused} />
+        tabBarIcon: ({ focused, color, size }) => (
+          <TabBarIcon
+            routeName={route.name}
+            focused={focused}
+            color={color}
+            size={size}
+          />
         ),
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
@@ -93,12 +85,5 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 11,
     fontWeight: '600',
-  },
-  tabIcon: {
-    fontSize: 22,
-    opacity: 0.6,
-  },
-  tabIconFocused: {
-    opacity: 1,
   },
 });

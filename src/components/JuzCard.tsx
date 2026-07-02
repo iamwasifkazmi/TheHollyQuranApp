@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
+import { ChevronRight } from './AppIcon';
 
 interface JuzCardProps {
   number: number;
@@ -61,7 +62,7 @@ export function JuzCard({ number, onPress, style }: JuzCardProps) {
         <Text style={styles.title}>Juz {number}</Text>
         <Text style={styles.subtitle}>{JUZ_NAMES[number] ?? `Para ${number}`}</Text>
       </View>
-      <Text style={styles.arrow}>›</Text>
+      <ChevronRight size={24} />
     </TouchableOpacity>
   );
 }
@@ -107,10 +108,5 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.textSecondary,
     marginTop: 2,
-  },
-  arrow: {
-    fontSize: 24,
-    color: colors.textMuted,
-    fontWeight: '300',
   },
 });

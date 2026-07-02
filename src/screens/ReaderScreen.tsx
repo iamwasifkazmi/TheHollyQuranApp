@@ -13,6 +13,7 @@ import { PageReader } from '../components/PageReader';
 import { getPage, getPageForVerse } from '../services/quranService';
 import { toggleBookmark, isBookmarked } from '../services/bookmarkService';
 import { colors } from '../theme/colors';
+import { ChevronLeft } from '../components/AppIcon';
 import type { RootStackParamList } from '../types/quran';
 
 type Props = {
@@ -61,7 +62,10 @@ export function ReaderScreen({ navigation, route }: Props) {
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Back</Text>
+          <View style={styles.backRow}>
+            <ChevronLeft size={22} color={colors.accentLight} />
+            <Text style={styles.backText}>Back</Text>
+          </View>
         </TouchableOpacity>
         <Text style={styles.title}>Mushaf Reader</Text>
         <TouchableOpacity
@@ -95,6 +99,11 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     paddingVertical: 4,
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   backText: {
     color: colors.accentLight,

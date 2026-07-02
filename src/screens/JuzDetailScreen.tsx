@@ -17,6 +17,7 @@ import {
   getPageForVerse,
 } from '../services/quranService';
 import { toggleBookmark, isBookmarked } from '../services/bookmarkService';
+import { BookmarkIcon, ChevronLeft } from '../components/AppIcon';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import type { RootStackParamList } from '../types/quran';
@@ -61,13 +62,16 @@ export function JuzDetailScreen({ navigation, route }: Props) {
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Back</Text>
+          <View style={styles.backRow}>
+            <ChevronLeft size={22} color={colors.accentLight} />
+            <Text style={styles.backText}>Back</Text>
+          </View>
         </TouchableOpacity>
         <Text style={styles.title}>Juz {juzNumber}</Text>
         <Text style={styles.subtitle}>Para {juzNumber} · {verses.length} verses</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={handleBookmark} style={styles.iconBtn}>
-            <Text style={styles.bookmarkIcon}>{bookmarked ? '★' : '☆'}</Text>
+            <BookmarkIcon active={bookmarked} size={24} color={colors.accent} />
           </TouchableOpacity>
           <TouchableOpacity onPress={openInMushaf} style={styles.mushafBtn}>
             <Text style={styles.mushafBtnText}>Open in Mushaf</Text>
@@ -113,6 +117,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 8,
   },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
   backText: {
     color: colors.accentLight,
     fontSize: 16,
@@ -136,10 +145,6 @@ const styles = StyleSheet.create({
   },
   iconBtn: {
     padding: 8,
-  },
-  bookmarkIcon: {
-    fontSize: 24,
-    color: colors.accent,
   },
   mushafBtn: {
     backgroundColor: colors.accent,

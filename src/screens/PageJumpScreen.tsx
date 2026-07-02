@@ -14,6 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getTotalPages } from '../services/quranService';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
+import { ChevronLeft } from '../components/AppIcon';
 import type { RootStackParamList } from '../types/quran';
 
 type Props = {
@@ -51,7 +52,10 @@ export function PageJumpScreen({ navigation }: Props) {
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Back</Text>
+          <View style={styles.backRow}>
+            <ChevronLeft size={22} color={colors.accentLight} />
+            <Text style={styles.backText}>Back</Text>
+          </View>
         </TouchableOpacity>
         <Text style={styles.title}>Go to Page</Text>
         <Text style={styles.subtitle}>Navigate to any page or verse</Text>
@@ -131,6 +135,11 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     marginBottom: 12,
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   backText: {
     color: colors.accentLight,

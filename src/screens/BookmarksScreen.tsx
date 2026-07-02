@@ -12,19 +12,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getBookmarks, removeBookmark } from '../services/bookmarkService';
+import { BookmarkTypeIcon, ChevronRight } from '../components/AppIcon';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import type { Bookmark, RootStackParamList } from '../types/quran';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
-};
-
-const TYPE_ICONS: Record<string, string> = {
-  surah: '📋',
-  page: '📄',
-  juz: '📑',
-  verse: '📌',
 };
 
 export function BookmarksScreen({ navigation }: Props) {
@@ -95,7 +90,12 @@ export function BookmarksScreen({ navigation }: Props) {
 
       {bookmarks.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>🔖</Text>
+          <MaterialCommunityIcons
+            name="bookmark-outline"
+            size={56}
+            color={colors.textMuted}
+            style={styles.emptyIcon}
+          />
           <Text style={styles.emptyTitle}>No bookmarks yet</Text>
           <Text style={styles.emptyText}>
             Bookmark surahs, pages, or juz while reading to find them quickly here.
@@ -112,7 +112,9 @@ export function BookmarksScreen({ navigation }: Props) {
               onPress={() => handlePress(item)}
               onLongPress={() => handleDelete(item)}
               activeOpacity={0.7}>
-              <Text style={styles.cardIcon}>{TYPE_ICONS[item.type] ?? '🔖'}</Text>
+              <View style={styles.cardIcon}>
+                <BookmarkTypeIcon type={item.type} size={28} color={colors.primary} />
+              </View>
               <View style={styles.cardContent}>
                 <Text style={styles.cardTitle}>{item.label}</Text>
                 {item.subtitle && (
@@ -120,7 +122,7 @@ export function BookmarksScreen({ navigation }: Props) {
                 )}
                 <Text style={styles.cardType}>{item.type}</Text>
               </View>
-              <Text style={styles.arrow}>›</Text>
+              <ChevronRight size={24} />
             </TouchableOpacity>
           )}
         />
@@ -163,7 +165,6 @@ const styles = StyleSheet.create({
     borderColor: colors.borderLight,
   },
   cardIcon: {
-    fontSize: 28,
     marginRight: 14,
   },
   cardContent: {
@@ -184,10 +185,6 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
     marginTop: 4,
   },
-  arrow: {
-    fontSize: 24,
-    color: colors.textMuted,
-  },
   empty: {
     flex: 1,
     alignItems: 'center',
@@ -195,7 +192,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyIcon: {
-    fontSize: 48,
     marginBottom: 16,
   },
   emptyTitle: {

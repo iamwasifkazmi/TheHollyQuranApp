@@ -13,6 +13,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { getLastRead } from '../services/bookmarkService';
+import { Icon, QuickActionIcons, ChevronRight } from '../components/AppIcon';
 import type { RootStackParamList } from '../types/quran';
 
 type Props = {
@@ -48,44 +49,48 @@ export function HomeScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}>
         <TouchableOpacity style={styles.continueCard} onPress={continueReading}>
           <View style={styles.continueIcon}>
-            <Text style={styles.continueIconText}>📖</Text>
+            <Icon
+              name={QuickActionIcons.continueReading}
+              size={26}
+              color={colors.accent}
+            />
           </View>
           <View style={styles.continueInfo}>
             <Text style={styles.continueTitle}>Continue Reading</Text>
             <Text style={styles.continueSubtitle}>Page {lastPage} of 604</Text>
           </View>
-          <Text style={styles.arrow}>›</Text>
+          <ChevronRight size={28} color={colors.primary} />
         </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>Quick Access</Text>
 
         <View style={styles.grid}>
           <QuickAction
-            icon="📄"
+            icon={QuickActionIcons.mushaf}
             title="Mushaf"
             subtitle="Swipe pages"
             onPress={() => navigation.navigate('Reader', { page: 1 })}
           />
           <QuickAction
-            icon="📋"
+            icon={QuickActionIcons.surahs}
             title="Surahs"
             subtitle="114 chapters"
             onPress={() => navigation.navigate('MainTabs', { screen: 'Surahs' } as never)}
           />
           <QuickAction
-            icon="📑"
+            icon={QuickActionIcons.juz}
             title="Juz / Para"
             subtitle="30 parts"
             onPress={() => navigation.navigate('MainTabs', { screen: 'Juz' } as never)}
           />
           <QuickAction
-            icon="🔖"
+            icon={QuickActionIcons.bookmarks}
             title="Bookmarks"
             subtitle="Saved places"
             onPress={() => navigation.navigate('MainTabs', { screen: 'Bookmarks' } as never)}
           />
           <QuickAction
-            icon="🔢"
+            icon={QuickActionIcons.pageJump}
             title="Go to Page"
             subtitle="Jump to page"
             onPress={() => navigation.navigate('PageJump')}
@@ -117,7 +122,7 @@ function QuickAction({
 }) {
   return (
     <TouchableOpacity style={styles.actionCard} onPress={onPress} activeOpacity={0.7}>
-      <Text style={styles.actionIcon}>{icon}</Text>
+      <Icon name={icon} size={28} color={colors.primary} style={styles.actionIcon} />
       <Text style={styles.actionTitle}>{title}</Text>
       <Text style={styles.actionSubtitle}>{subtitle}</Text>
     </TouchableOpacity>
@@ -187,9 +192,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 14,
   },
-  continueIconText: {
-    fontSize: 22,
-  },
   continueInfo: {
     flex: 1,
   },
@@ -201,11 +203,6 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.textSecondary,
     marginTop: 2,
-  },
-  arrow: {
-    fontSize: 28,
-    color: colors.primary,
-    fontWeight: '300',
   },
   sectionTitle: {
     ...typography.h3,
@@ -232,7 +229,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   actionIcon: {
-    fontSize: 28,
     marginBottom: 8,
   },
   actionTitle: {
