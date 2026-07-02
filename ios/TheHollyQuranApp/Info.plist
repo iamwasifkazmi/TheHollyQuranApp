@@ -34,7 +34,7 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string/>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -60,6 +60,7 @@
 	<array>
 		<string>Ionicons.ttf</string>
 		<string>MaterialCommunityIcons.ttf</string>
+		<string>PDMSSaleemQuranFont.ttf</string>
 	</array>
 </dict>
 </plist>

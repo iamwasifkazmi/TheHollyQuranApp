@@ -77,6 +77,7 @@ const TAB_ICONS: Record<string, { name: string; activeName: string }> = {
   Surahs: { name: 'book-open-variant', activeName: 'book-open' },
   Juz: { name: 'book-multiple-outline', activeName: 'book-multiple' },
   Bookmarks: { name: 'bookmark-outline', activeName: 'bookmark' },
+  Settings: { name: 'cog-outline', activeName: 'cog' },
 };
 
 export function TabBarIcon({

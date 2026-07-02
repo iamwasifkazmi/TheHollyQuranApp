@@ -6,23 +6,33 @@
  */
 
 import React from 'react';
-import { StatusBar, useColorScheme } from 'react-native';
+import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SettingsProvider, useAppTheme } from './src/context/SettingsContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
-import { colors } from './src/theme/colors';
+
+function AppContent() {
+  const { theme, isDark } = useAppTheme();
+
+  return (
+    <>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.primary}
+      />
+      <AppNavigator />
+    </>
+  );
+}
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar
-          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-          backgroundColor={colors.primary}
-        />
-        <AppNavigator />
+        <SettingsProvider>
+          <AppContent />
+        </SettingsProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

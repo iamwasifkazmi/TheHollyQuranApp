@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAppTheme } from '../context/SettingsContext';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { getLastRead } from '../services/bookmarkService';
@@ -22,6 +23,7 @@ type Props = {
 
 export function HomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { theme } = useAppTheme();
   const [lastPage, setLastPage] = useState(1);
 
   useFocusEffect(
@@ -35,9 +37,13 @@ export function HomeScreen({ navigation }: Props) {
   }, [navigation, lastPage]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-      <View style={styles.header}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, backgroundColor: theme.background },
+      ]}>
+      <StatusBar barStyle="light-content" backgroundColor={theme.primary} />
+      <View style={[styles.header, { backgroundColor: theme.primary }]}>
         <Text style={styles.bismillah}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</Text>
         <Text style={styles.title}>The Holy Quran</Text>
         <Text style={styles.subtitle}>القرآن الكريم</Text>
@@ -47,29 +53,43 @@ export function HomeScreen({ navigation }: Props) {
         style={styles.content}
         contentContainerStyle={styles.contentInner}
         showsVerticalScrollIndicator={false}>
-        <TouchableOpacity style={styles.continueCard} onPress={continueReading}>
-          <View style={styles.continueIcon}>
+        <TouchableOpacity
+          style={[
+            styles.continueCard,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.accent,
+            },
+          ]}
+          onPress={continueReading}>
+          <View style={[styles.continueIcon, { backgroundColor: theme.primary }]}>
             <Icon
               name={QuickActionIcons.continueReading}
               size={26}
-              color={colors.accent}
+              color={theme.accent}
             />
           </View>
           <View style={styles.continueInfo}>
-            <Text style={styles.continueTitle}>Continue Reading</Text>
-            <Text style={styles.continueSubtitle}>Page {lastPage} of 604</Text>
+            <Text style={[styles.continueTitle, { color: theme.text }]}>
+              Continue Reading
+            </Text>
+            <Text style={[styles.continueSubtitle, { color: theme.textSecondary }]}>
+              Page {lastPage} of 604
+            </Text>
           </View>
-          <ChevronRight size={28} color={colors.primary} />
+          <ChevronRight size={28} color={theme.primary} />
         </TouchableOpacity>
 
-        <Text style={styles.sectionTitle}>Quick Access</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          Quick Access
+        </Text>
 
         <View style={styles.grid}>
           <QuickAction
             icon={QuickActionIcons.mushaf}
             title="Mushaf"
             subtitle="Swipe pages"
-            onPress={() => navigation.navigate('Reader', { page: 1 })}
+            onPress={() => navigation.navigate('Reader', {})}
           />
           <QuickAction
             icon={QuickActionIcons.surahs}
@@ -97,9 +117,11 @@ export function HomeScreen({ navigation }: Props) {
           />
         </View>
 
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>Offline & Authentic</Text>
-          <Text style={styles.infoText}>
+        <View style={[styles.infoCard, { backgroundColor: theme.primaryDark }]}>
+          <Text style={[styles.infoTitle, { color: theme.accent }]}>
+            Offline & Authentic
+          </Text>
+          <Text style={[styles.infoText, { color: theme.textOnPrimary }]}>
             Uthmani script from Tanzil Project · Madani Mushaf page layout ·
             Quran.com metadata · Works fully offline
           </Text>
@@ -120,11 +142,23 @@ function QuickAction({
   subtitle: string;
   onPress: () => void;
 }) {
+  const { theme } = useAppTheme();
   return (
-    <TouchableOpacity style={styles.actionCard} onPress={onPress} activeOpacity={0.7}>
-      <Icon name={icon} size={28} color={colors.primary} style={styles.actionIcon} />
-      <Text style={styles.actionTitle}>{title}</Text>
-      <Text style={styles.actionSubtitle}>{subtitle}</Text>
+    <TouchableOpacity
+      style={[
+        styles.actionCard,
+        {
+          backgroundColor: theme.surface,
+          borderColor: theme.borderLight,
+        },
+      ]}
+      onPress={onPress}
+      activeOpacity={0.7}>
+      <Icon name={icon} size={28} color={theme.primary} style={styles.actionIcon} />
+      <Text style={[styles.actionTitle, { color: theme.text }]}>{title}</Text>
+      <Text style={[styles.actionSubtitle, { color: theme.textMuted }]}>
+        {subtitle}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -132,10 +166,8 @@ function QuickAction({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingBottom: 28,
     paddingTop: 16,
@@ -171,23 +203,20 @@ const styles = StyleSheet.create({
   continueCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 18,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: colors.accent,
-    shadowColor: colors.cardShadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
   },
   continueIcon: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -197,16 +226,13 @@ const styles = StyleSheet.create({
   },
   continueTitle: {
     ...typography.h3,
-    color: colors.text,
   },
   continueSubtitle: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   sectionTitle: {
     ...typography.h3,
-    color: colors.text,
     marginBottom: 14,
   },
   grid: {
@@ -217,12 +243,10 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     width: '47%',
-    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    shadowColor: colors.cardShadow,
+    shadowColor: '#0D4A3E14',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 8,
@@ -234,26 +258,21 @@ const styles = StyleSheet.create({
   actionTitle: {
     ...typography.h3,
     fontSize: 16,
-    color: colors.text,
   },
   actionSubtitle: {
     ...typography.caption,
-    color: colors.textMuted,
     marginTop: 2,
   },
   infoCard: {
-    backgroundColor: colors.primaryDark,
     borderRadius: 16,
     padding: 18,
   },
   infoTitle: {
     ...typography.h3,
-    color: colors.accent,
     marginBottom: 8,
   },
   infoText: {
     ...typography.bodySmall,
-    color: colors.textOnPrimary,
     opacity: 0.85,
     lineHeight: 20,
   },

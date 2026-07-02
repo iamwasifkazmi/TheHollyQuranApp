@@ -62,4 +62,5 @@ export type MainTabParamList = {
   Surahs: undefined;
   Juz: undefined;
   Bookmarks: undefined;
+  Settings: undefined;
 };

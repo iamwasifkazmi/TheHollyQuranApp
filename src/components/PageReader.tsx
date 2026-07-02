@@ -10,10 +10,12 @@ import {
 import PagerView from 'react-native-pager-view';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BookmarkIcon } from './AppIcon';
-import { colors } from '../theme/colors';
+import { useAppTheme } from '../context/SettingsContext';
 import { typography } from '../theme/typography';
-import { getPage, getTotalPages } from '../services/quranService';
+import { getTotalPages, getPage } from '../services/quranService';
 import { saveLastRead } from '../services/bookmarkService';
+import { getPageBackground } from '../services/settingsService';
+import { toArabicNumeral } from '../utils/arabic';
 import type { Page } from '../types/quran';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -25,34 +27,51 @@ interface PageReaderProps {
   isBookmarked?: boolean;
 }
 
-function toArabicNumeral(num: number): string {
-  const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-  return String(num)
-    .split('')
-    .map(d => arabicDigits[parseInt(d, 10)])
-    .join('');
-}
-
-function PageContent({ page }: { page: Page }) {
+function PageContent({ page, pageNumber }: { page: Page; pageNumber: number }) {
+  const { theme, settings, arabicFontSize, arabicLineHeight } = useAppTheme();
   const chapterInfo = page.chapters[0];
+  const pageBg = getPageBackground(settings.pageBrightness, settings.darkMode);
 
   return (
     <ScrollView
-      style={styles.pageScroll}
+      style={[styles.pageScroll, { backgroundColor: pageBg }]}
       contentContainerStyle={styles.pageContent}
       showsVerticalScrollIndicator={false}>
       {chapterInfo && (
-        <View style={styles.header}>
-          <Text style={styles.surahNameAr}>{chapterInfo.nameAr}</Text>
-          <Text style={styles.surahNameEn}>{chapterInfo.nameEn}</Text>
+        <View style={[styles.header, { borderBottomColor: theme.divider }]}>
+          <Text
+            style={[
+              styles.surahNameAr,
+              { color: theme.primary, fontSize: arabicFontSize + 6 },
+            ]}>
+            {chapterInfo.nameAr}
+          </Text>
+          <Text style={[styles.surahNameEn, { color: theme.textSecondary }]}>
+            {chapterInfo.nameEn} · Page {pageNumber}
+          </Text>
         </View>
       )}
       <View style={styles.versesContainer}>
         {page.verses.map((verse, idx) => (
-          <Text key={`${verse.key}-${idx}`} style={styles.verseInline}>
-            {verse.text}
-            <Text style={styles.ayahEnd}> ﴿{toArabicNumeral(verse.ayah)}﴾ </Text>
-          </Text>
+          <View
+            key={`${verse.key}-${idx}`}
+            style={[styles.verseRow, { borderBottomColor: theme.divider }]}>
+            <Text
+              style={[
+                styles.verseText,
+                {
+                  color: theme.textArabic,
+                  fontSize: arabicFontSize,
+                  lineHeight: arabicLineHeight,
+                },
+              ]}>
+              {verse.text}
+              <Text style={[styles.ayahEnd, { color: theme.accent }]}>
+                {' '}
+                ﴿{toArabicNumeral(verse.ayah)}﴾
+              </Text>
+            </Text>
+          </View>
         ))}
       </View>
     </ScrollView>
@@ -65,6 +84,7 @@ export function PageReader({
   onBookmarkPress,
   isBookmarked = false,
 }: PageReaderProps) {
+  const { theme, settings } = useAppTheme();
   const [currentPage, setCurrentPage] = useState(initialPage);
   const pagerRef = React.useRef<PagerView>(null);
   const totalPages = getTotalPages();
@@ -74,7 +94,7 @@ export function PageReader({
       pagerRef.current?.setPageWithoutAnimation(initialPage - 1);
       setCurrentPage(initialPage);
     }
-  }, [initialPage]);
+  }, [initialPage, currentPage]);
 
   const handlePageSelected = useCallback(
     (e: { nativeEvent: { position: number } }) => {
@@ -95,26 +115,35 @@ export function PageReader({
   const pageData = getPage(currentPage);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.toolbar}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View
+        style={[
+          styles.toolbar,
+          {
+            backgroundColor: theme.primary,
+            borderBottomColor: theme.primaryDark,
+          },
+        ]}>
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => goToPage(currentPage - 1)}
-          disabled={currentPage <= 1}>
-          <View style={styles.navRow}>
-            <MaterialCommunityIcons
-              name="chevron-left"
-              size={20}
-              color={currentPage <= 1 ? colors.textOnPrimary + '59' : colors.textOnPrimary}
-            />
-            <Text style={[styles.navText, currentPage <= 1 && styles.navDisabled]}>
-              Prev
-            </Text>
-          </View>
+          disabled={currentPage <= 1}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <MaterialCommunityIcons
+            name="chevron-left"
+            size={28}
+            color={
+              currentPage <= 1
+                ? theme.textOnPrimary + '59'
+                : theme.textOnPrimary
+            }
+          />
         </TouchableOpacity>
 
         <View style={styles.pageIndicator}>
-          <Text style={styles.pageNumber}>{currentPage}</Text>
+          <Text style={[styles.pageNumber, { color: theme.accent }]}>
+            {currentPage}
+          </Text>
           <Text style={styles.pageTotal}>/ {totalPages}</Text>
           {pageData?.juzNumber && (
             <Text style={styles.juzLabel}>Juz {pageData.juzNumber}</Text>
@@ -124,32 +153,28 @@ export function PageReader({
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => goToPage(currentPage + 1)}
-          disabled={currentPage >= totalPages}>
-          <View style={styles.navRow}>
-            <Text
-              style={[
-                styles.navText,
-                currentPage >= totalPages && styles.navDisabled,
-              ]}>
-              Next
-            </Text>
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={20}
-              color={
-                currentPage >= totalPages
-                  ? colors.textOnPrimary + '59'
-                  : colors.textOnPrimary
-              }
-            />
-          </View>
+          disabled={currentPage >= totalPages}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <MaterialCommunityIcons
+            name="chevron-right"
+            size={28}
+            color={
+              currentPage >= totalPages
+                ? theme.textOnPrimary + '59'
+                : theme.textOnPrimary
+            }
+          />
         </TouchableOpacity>
 
         {onBookmarkPress && (
           <TouchableOpacity
             style={styles.bookmarkBtn}
             onPress={() => onBookmarkPress(currentPage)}>
-            <BookmarkIcon active={isBookmarked} size={24} color={colors.accent} />
+            <BookmarkIcon
+              active={isBookmarked}
+              size={24}
+              color={theme.accent}
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -165,10 +190,19 @@ export function PageReader({
           return (
             <View key={i} style={styles.pageWrapper}>
               {page && page.verses.length > 0 ? (
-                <PageContent page={page} />
+                <PageContent page={page} pageNumber={i + 1} />
               ) : (
-                <View style={styles.emptyPage}>
-                  <Text style={styles.emptyText}>Page {i + 1}</Text>
+                <View
+                  style={[
+                    styles.emptyPage,
+                    {
+                      backgroundColor: getPageBackground(
+                        settings.pageBrightness,
+                        settings.darkMode,
+                      ),
+                    },
+                  ]}>
+                  <Text style={{ color: theme.textMuted }}>Page {i + 1}</Text>
                 </View>
               )}
             </View>
@@ -176,9 +210,20 @@ export function PageReader({
         })}
       </PagerView>
 
-      <View style={styles.swipeHint}>
-        <Text style={styles.swipeHintText}>Swipe left or right to turn pages</Text>
-      </View>
+      {settings.showSwipeHint && (
+        <View
+          style={[
+            styles.swipeHint,
+            {
+              backgroundColor: theme.surface,
+              borderTopColor: theme.borderLight,
+            },
+          ]}>
+          <Text style={[styles.swipeHintText, { color: theme.textMuted }]}>
+            Swipe left or right to turn pages
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -186,7 +231,6 @@ export function PageReader({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   toolbar: {
     flexDirection: 'row',
@@ -194,26 +238,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: colors.primary,
     borderBottomWidth: 1,
-    borderBottomColor: colors.primaryDark,
   },
   navButton: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
-  },
-  navRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  navText: {
-    color: colors.textOnPrimary,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  navDisabled: {
-    opacity: 0.35,
   },
   pageIndicator: {
     alignItems: 'center',
@@ -221,16 +250,15 @@ const styles = StyleSheet.create({
   pageNumber: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.accent,
   },
   pageTotal: {
     fontSize: 12,
-    color: colors.textOnPrimary,
+    color: '#FFFFFF',
     opacity: 0.7,
   },
   juzLabel: {
     fontSize: 11,
-    color: colors.accentLight,
+    color: '#E8C84A',
     marginTop: 2,
   },
   bookmarkBtn: {
@@ -247,39 +275,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pageContent: {
-    padding: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     paddingBottom: 40,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
-    paddingBottom: 16,
+    marginBottom: 16,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
   },
   surahNameAr: {
-    fontSize: 28,
-    color: colors.primary,
     fontFamily: typography.arabicLarge.fontFamily,
     marginBottom: 4,
+    textAlign: 'center',
   },
   surahNameEn: {
     ...typography.bodySmall,
-    color: colors.textSecondary,
   },
-  versesContainer: {
-    flexDirection: 'row-reverse',
-    flexWrap: 'wrap',
-    alignItems: 'flex-start',
+  versesContainer: {},
+  verseRow: {
+    borderBottomWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
   },
-  verseInline: {
-    ...typography.arabicMedium,
-    color: colors.textArabic,
+  verseText: {
     textAlign: 'right',
     writingDirection: 'rtl',
+    fontFamily: typography.arabicMedium.fontFamily,
   },
   ayahEnd: {
-    color: colors.accent,
     fontSize: 16,
   },
   emptyPage: {
@@ -287,18 +312,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyText: {
-    color: colors.textMuted,
-  },
   swipeHint: {
     paddingVertical: 8,
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
   },
   swipeHintText: {
     ...typography.caption,
-    color: colors.textMuted,
   },
 });

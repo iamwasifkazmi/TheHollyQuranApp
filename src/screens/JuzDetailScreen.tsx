@@ -61,11 +61,11 @@ export function JuzDetailScreen({ navigation, route }: Props) {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <View style={styles.backRow}>
-            <ChevronLeft size={22} color={colors.accentLight} />
-            <Text style={styles.backText}>Back</Text>
-          </View>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <ChevronLeft size={28} color={colors.accentLight} />
         </TouchableOpacity>
         <Text style={styles.title}>Juz {juzNumber}</Text>
         <Text style={styles.subtitle}>Para {juzNumber} · {verses.length} verses</Text>
@@ -116,15 +116,6 @@ const styles = StyleSheet.create({
   backBtn: {
     alignSelf: 'flex-start',
     marginBottom: 8,
-  },
-  backRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  backText: {
-    color: colors.accentLight,
-    fontSize: 16,
   },
   title: {
     fontSize: 28,

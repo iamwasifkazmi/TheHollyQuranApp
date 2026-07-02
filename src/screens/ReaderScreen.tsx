@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { PageReader } from '../components/PageReader';
 import { getPage, getPageForVerse } from '../services/quranService';
-import { toggleBookmark, isBookmarked } from '../services/bookmarkService';
-import { colors } from '../theme/colors';
+import { toggleBookmark, isBookmarked, getLastRead } from '../services/bookmarkService';
+import { useAppTheme } from '../context/SettingsContext';
 import { ChevronLeft } from '../components/AppIcon';
 import type { RootStackParamList } from '../types/quran';
 
@@ -22,24 +22,40 @@ type Props = {
 };
 
 export function ReaderScreen({ navigation, route }: Props) {
-  const resolvedPage = useMemo(() => {
-    if (route.params?.page) return route.params.page;
-    if (route.params?.surah) {
-      return getPageForVerse(
-        route.params.surah,
-        route.params.ayah ?? 1,
-      );
-    }
-    return 1;
-  }, [route.params]);
-
-  const insets = useSafeAreaInsets();
-  const [currentPage, setCurrentPage] = useState(resolvedPage);
+  const { theme, settings } = useAppTheme();
+  const [startPage, setStartPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [bookmarked, setBookmarked] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    setCurrentPage(resolvedPage);
-  }, [resolvedPage]);
+    const resolve = async () => {
+      if (route.params?.page) {
+        setStartPage(route.params.page);
+        setCurrentPage(route.params.page);
+        return;
+      }
+      if (route.params?.surah) {
+        const page = getPageForVerse(
+          route.params.surah,
+          route.params.ayah ?? 1,
+        );
+        setStartPage(page);
+        setCurrentPage(page);
+        return;
+      }
+      if (settings.preferLastRead) {
+        const last = await getLastRead();
+        setStartPage(last);
+        setCurrentPage(last);
+        return;
+      }
+      const preset = settings.presetStartPage ?? 1;
+      setStartPage(preset);
+      setCurrentPage(preset);
+    };
+    resolve();
+  }, [route.params, settings.preferLastRead, settings.presetStartPage]);
 
   useEffect(() => {
     isBookmarked('page', { page: currentPage }).then(setBookmarked);
@@ -58,24 +74,28 @@ export function ReaderScreen({ navigation, route }: Props) {
   }, []);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <View style={styles.backRow}>
-            <ChevronLeft size={22} color={colors.accentLight} />
-            <Text style={styles.backText}>Back</Text>
-          </View>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, backgroundColor: theme.background },
+      ]}>
+      <StatusBar barStyle="light-content" backgroundColor={theme.primaryDark} />
+      <View style={[styles.topBar, { backgroundColor: theme.primaryDark }]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <ChevronLeft size={28} color={theme.accentLight} />
         </TouchableOpacity>
         <Text style={styles.title}>Mushaf Reader</Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('PageJump')}
-          style={styles.jumpBtn}>
-          <Text style={styles.jumpText}>Go to</Text>
+          style={[styles.jumpBtn, { backgroundColor: theme.primaryLight }]}>
+          <Text style={[styles.jumpText, { color: theme.accent }]}>Go to</Text>
         </TouchableOpacity>
       </View>
       <PageReader
-        initialPage={resolvedPage}
+        initialPage={startPage}
         onPageChange={setCurrentPage}
         onBookmarkPress={handleBookmark}
         isBookmarked={bookmarked}
@@ -87,41 +107,28 @@ export function ReaderScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primaryDark,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
   backBtn: {
     paddingVertical: 4,
   },
-  backRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  backText: {
-    color: colors.accentLight,
-    fontSize: 16,
-  },
   title: {
-    color: colors.textOnPrimary,
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
   jumpBtn: {
-    backgroundColor: colors.primaryLight,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
   },
   jumpText: {
-    color: colors.accent,
     fontSize: 14,
     fontWeight: '600',
   },

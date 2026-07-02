@@ -17,6 +17,7 @@ import {
   getPageForVerse,
 } from '../services/quranService';
 import { toggleBookmark, isBookmarked } from '../services/bookmarkService';
+import { useAppTheme } from '../context/SettingsContext';
 import { BookmarkIcon, ChevronLeft } from '../components/AppIcon';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
@@ -30,6 +31,7 @@ type Props = {
 export function SurahDetailScreen({ navigation, route }: Props) {
   const { surahId } = route.params;
   const insets = useSafeAreaInsets();
+  const { theme, arabicFontSize } = useAppTheme();
   const chapter = getChapter(surahId);
   const verses = getSurahVerses(surahId);
   const [bookmarked, setBookmarked] = useState(false);
@@ -63,14 +65,14 @@ export function SurahDetailScreen({ navigation, route }: Props) {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <View style={styles.backRow}>
-            <ChevronLeft size={22} color={colors.accentLight} />
-            <Text style={styles.backText}>Back</Text>
-          </View>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+      <StatusBar barStyle="light-content" backgroundColor={theme.primary} />
+      <View style={[styles.header, { backgroundColor: theme.primary }]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <ChevronLeft size={28} color={colors.accentLight} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.surahArabic}>{chapter.nameArabic}</Text>
@@ -95,7 +97,7 @@ export function SurahDetailScreen({ navigation, route }: Props) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         {surahId !== 1 && surahId !== 9 && (
-          <Text style={styles.bismillah}>
+          <Text style={[styles.bismillah, { color: theme.primary, fontSize: arabicFontSize }]}>
             بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
           </Text>
         )}
@@ -125,16 +127,7 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     marginBottom: 8,
-  },
-  backRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  backText: {
-    color: colors.accentLight,
-    fontSize: 16,
-    fontWeight: '500',
+    alignSelf: 'flex-start',
   },
   headerCenter: {
     alignItems: 'center',

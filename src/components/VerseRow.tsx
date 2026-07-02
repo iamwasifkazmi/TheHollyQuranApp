@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { useAppTheme } from '../context/SettingsContext';
 import { typography } from '../theme/typography';
+import { toArabicNumeral } from '../utils/arabic';
 import type { Verse } from '../types/quran';
 
 interface VerseRowProps {
@@ -10,25 +11,34 @@ interface VerseRowProps {
   surahName?: string;
 }
 
-function toArabicNumeral(num: number): string {
-  const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-  return String(num)
-    .split('')
-    .map(d => arabicDigits[parseInt(d, 10)])
-    .join('');
-}
-
 export function VerseRow({ verse, showSurahLabel, surahName }: VerseRowProps) {
+  const { theme, arabicFontSize, arabicLineHeight } = useAppTheme();
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[styles.container, { borderBottomColor: theme.divider }]}>
       {showSurahLabel && surahName && (
-        <Text style={styles.surahLabel}>{surahName}</Text>
+        <Text style={[styles.surahLabel, { color: theme.primary }]}>
+          {surahName}
+        </Text>
       )}
       <View style={styles.verseRow}>
-        <View style={styles.ayahMarker}>
-          <Text style={styles.ayahNumber}>{toArabicNumeral(verse.ayah)}</Text>
+        <View style={[styles.ayahMarker, { borderColor: theme.accent }]}>
+          <Text style={[styles.ayahNumber, { color: theme.accent }]}>
+            {toArabicNumeral(verse.ayah)}
+          </Text>
         </View>
-        <Text style={styles.verseText}>{verse.text}</Text>
+        <Text
+          style={[
+            styles.verseText,
+            {
+              color: theme.textArabic,
+              fontSize: arabicFontSize,
+              lineHeight: arabicLineHeight,
+            },
+          ]}>
+          {verse.text}
+        </Text>
       </View>
     </View>
   );
@@ -36,11 +46,12 @@ export function VerseRow({ verse, showSurahLabel, surahName }: VerseRowProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    borderBottomWidth: 1,
+    paddingVertical: 12,
+    marginBottom: 4,
   },
   surahLabel: {
     ...typography.h3,
-    color: colors.primary,
     textAlign: 'center',
     marginBottom: 12,
     marginTop: 8,
@@ -55,19 +66,18 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 6,
   },
   ayahNumber: {
     fontSize: 11,
-    color: colors.accent,
     fontWeight: '600',
   },
   verseText: {
-    ...typography.arabicMedium,
-    color: colors.textArabic,
+    fontFamily: typography.arabicMedium.fontFamily,
+    textAlign: 'right',
+    writingDirection: 'rtl',
     flex: 1,
   },
 });
